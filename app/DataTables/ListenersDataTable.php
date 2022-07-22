@@ -1,97 +1,62 @@
-<?php
+@extends('layouts.base')
+@section('body')
+<div class="container">
+    <br />
+    @if ( Session::has('success'))
+    <div class="alert alert-success">
+        <p>{{ Session::get('success') }}</p>
+    </div><br />
+    @endif
+</div>
+<div><button type="button" class="btn btn-sm" data-toggle="modal" data-target="#listenerModal">
+        create new Listener
+    </button></div>
+<div>
+    {{$dataTable->table(['class' => 'table table-bordered table-striped table-hover '], true)}}
+</div>
+<div class="modal" id="listenerModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document" style="width:75%;">
+        <div class="modal-content">
+            <div class="modal-header text-center">
+                <p class="modal-title w-100 font-weight-bold">Add New Listener/p>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
 
-namespace App\DataTables;
-
-use App\Models\Artist;
-use Yajra\DataTables\Html\Button;
-use Yajra\DataTables\Html\Column;
-use Yajra\DataTables\Html\Editor\Editor;
-use Yajra\DataTables\Html\Editor\Fields;
-use Yajra\DataTables\Services\DataTable;
-
-class ArtistsDataTable extends DataTable
-{
-    /**
-     * Build DataTable class.
-     *
-     * @param mixed $query Results from query() method.
-     * @return \Yajra\DataTables\DataTableAbstract
-     */
-    public function dataTable($query)
-    {
-       return datatables()
-            ->eloquent($query)
-            ->addColumn('action', function($row){ // ? Header
-       
-               $btn = '<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#artistModal"  data-id="'.$row->id.'"  > Edit</button>';
-                return $btn;
-              });
-                     // ->rawColumns(['action']);
-    }
-
-    /**
-     * Get query source of dataTable.
-     *
-     * @param \App\Models\Artist $model
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function query(Artist $model)
-    {   // ? pwede where or orderby pag nakita newQuery
-        return $model->newQuery();
-    }
-
-    /**
-     * Optional method if you want to use html builder.
-     *
-     * @return \Yajra\DataTables\Html\Builder
-     */
-    public function html()
-    {
-        return $this->builder()
-            ->setTableId('artists-table')
-            ->columns($this->getColumns())
-            ->minifiedAjax()
-            ->dom('Bfrtip')
-            ->orderBy(1)
-            ->buttons(
-                Button::make('create')->addClass('btn btn-sm'),
-                Button::make('export'),
-                Button::make('print'),
-                Button::make('reset'),
-                Button::make('reload')
-            ); // TODO: Incase walang lumalabas kulang ka ng gento php artisan vendor:publish --tag=datatables-buttons and php artisan vendor:publish --tag=datatables
-    }
-
-    /**
-     * Get columns.
-     *
-     * @return array
-     */
-    protected function getColumns()
-    {
-         return [
-            
-            Column::make('id'),
-            Column::make('artist_name')->title('artist'), // ? Title is yung header
-            Column::make('created_at'),
-            Column::make('updated_at'),
-            Column::make('action') // ! kailagan imanu mano sa pag gawa button need to specify title pag di binago action yung name
-                  ->exportable(false)
-                  ->printable(false)
-                  
-            //       ->addClass('text-center'),
-        ];
-    }
-
-    /**
-     * Get filename for export.
-     *
-     * @return string
-     */
-    protected function filename()
-    {
-        return 'Artists_' . date('YmdHis');
-    }
-}
-
-
+                <form method="post" action="{{url('listener')}}">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    <div class="row">
+                        <div class="col-md-4"></div>
+                        <div class="form-group col-md-4">
+                            <label for="Name">listener Name:</label>
+                            <input type="text" class="form-control" name="listener_name">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4"></div>
+                        <div class="form-group col-md-4">
+                            @foreach($albums as $album )
+                            {{-- {{dd($album)}} --}}
+                            <div class="form-check form-check-inline">
+                                {{ Form::checkbox('album_id[]',$album->id, null,
+                                array('class'=>'form-check-input','id'=>'album')) }}
+                                {!!Form::label('album', $album->album_name. ' by '.$album->artist->artist_name
+                                ,array('class'=>'form-check-label')) !!}
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4"></div>
+                        <div class="form-group col-md-4" style="margin-top:60px">
+                            <button type="submit" class="btn btn-success">Submit</button>
+                        </div>
+                    </div>
+                    {!! Form::close() !!}
+            </div>
+        </div>
+    </div>
+    @push('scripts')
+    {{$dataTable->scripts()}}
+    @endpush
+    @endsection
