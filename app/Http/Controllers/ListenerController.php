@@ -19,29 +19,29 @@ class ListenerController extends Controller
      */
     public function index(Request $request)
     {
-    //     if (empty($request->get('search'))) 
-    //     {
-    //     $listeners = Listener::with('albums')->get();       
-    //     }
-    //     else 
-    //     {
-    //         $listeners = Listener::with(['albums' =>function($q) use($request)
-    //         {
-    //         $q->where("album_name","LIKE", "%".$request->get('search')."%");}])->get();
-    //     }
-    // $url = 'listener';
-    // return View::make('listener.index',compact('listeners','url'));
-
-    if(empty($request->get('search'))){
-        $listeners = Listener::with('albums')->get();
-        dd($listeners);
-        return $listeners->albums->map(function($album){
-            dump($album);
-            });
+        if (empty($request->get('search'))) 
+        {
+        $listeners = Listener::with('albums')->get();       
         }
-        else{
-
+        else 
+        {
+            $listeners = Listener::with(['albums' =>function($q) use($request)
+            {
+            $q->where("album_name","LIKE", "%".$request->get('search')."%");}])->get();
         }
+    $url = 'listener';
+    return View::make('listener.index',compact('listeners','url'));
+
+    // if(empty($request->get('search'))){
+    //     $listeners = Listener::with('albums')->get();
+    //     dd($listeners);
+    //     return $listeners->albums->map(function($album){
+    //         dump($album);
+    //         });
+    //     }
+    //     else{
+
+    //     }
     }
     
 

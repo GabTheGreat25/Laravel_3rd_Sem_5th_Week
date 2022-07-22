@@ -56,6 +56,15 @@ Route::get('/show-artist/{id}', [
       'uses' => 'ArtistController@show',
        'as' => 'getArtist'
     ]);
+
+Route::get('/listeners', [
+      'uses' => 'ListenerController@getListeners',
+       'as' => 'getListeners'
+    ]);
+    Route::get('/albums', [
+      'uses' => 'AlbumController@getAlbums',
+       'as' => 'getAlbums'
+    ]);
 Route::get('/search/{search?}',['uses' => 'SearchController@search','as' => 'search']);
 Route::resource('artist', 'ArtistController')->except(['index','artist']);
 Route::resource('album', 'AlbumController')->except(['index']);
