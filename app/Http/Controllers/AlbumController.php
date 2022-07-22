@@ -8,6 +8,7 @@ use Redirect;
 use App\Models\Album;
 use App\Models\Artist;
 use DB;
+use App\DataTables\AlbumsDataTable;
 
 
 class AlbumController extends Controller
@@ -109,6 +110,15 @@ class AlbumController extends Controller
           $album->delete();
 
         return Redirect::to('/album')->with('success','Album deleted!');
+
+    }
+
+    public function getAlbums(AlbumsDataTable $dataTable)
+    {   
+       
+        $albums =  Album::with(['artist','listeners'])->get();
+
+        return $dataTable->render('albums.album');
 
     }
 }

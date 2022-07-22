@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use DB;
 use View;
 use Redirect;
-
+use App\DataTables\ListenersDataTable;
 use App\Models\Album;
 use App\Models\Listener;
 
@@ -19,19 +19,31 @@ class ListenerController extends Controller
      */
     public function index(Request $request)
     {
-        if (empty($request->get('search'))) 
-        {
-        $listeners = Listener::with('albums')->get();       
+    //     if (empty($request->get('search'))) 
+    //     {
+    //     $listeners = Listener::with('albums')->get();       
+    //     }
+    //     else 
+    //     {
+    //         $listeners = Listener::with(['albums' =>function($q) use($request)
+    //         {
+    //         $q->where("album_name","LIKE", "%".$request->get('search')."%");}])->get();
+    //     }
+    // $url = 'listener';
+    // return View::make('listener.index',compact('listeners','url'));
+
+    if(empty($request->get('search'))){
+        $listeners = Listener::with('albums')->get();
+        dd($listeners);
+        return $listeners->albums->map(function($album){
+            dump($album);
+            });
         }
-        else 
-        {
-            $listeners = Listener::with(['albums' =>function($q) use($request)
-            {
-            $q->where("album_name","LIKE", "%".$request->get('search')."%");}])->get();
+        else{
+
         }
-    $url = 'listener';
-    return View::make('listener.index',compact('listeners','url'));
     }
+    
 
 
     /**
@@ -133,6 +145,12 @@ return Redirect::to('listener')->with('success','New listener added!');
         $Listener = Listener::find($id);
         $Listener->albums()->detach();
         $Listener->delete(); 
-        return Redirect::route('listener.index')->with('success','Listener deleted!');
+        return Redirect::route('getListeners')->with('success','Listener deleted!');
+    }
+
+    public function getListeners(ListenersDataTable $dataTable)
+    {
+        $albums = Album::with('artist')->get();
+        return $dataTable->render('listener.listener', compact('albums'));
     }
 }
