@@ -1,62 +1,113 @@
-@extends('layouts.base')
-@section('body')
-<div class="container">
-    <br />
-    @if ( Session::has('success'))
-    <div class="alert alert-success">
-        <p>{{ Session::get('success') }}</p>
-    </div><br />
-    @endif
-</div>
-<div><button type="button" class="btn btn-sm" data-toggle="modal" data-target="#listenerModal">
-        create new Listener
-    </button></div>
-<div>
-    {{$dataTable->table(['class' => 'table table-bordered table-striped table-hover '], true)}}
-</div>
-<div class="modal" id="listenerModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document" style="width:75%;">
-        <div class="modal-content">
-            <div class="modal-header text-center">
-                <p class="modal-title w-100 font-weight-bold">Add New Listener/p>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+<?php
 
-                <form method="post" action="{{url('listener')}}">
-                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                    <div class="row">
-                        <div class="col-md-4"></div>
-                        <div class="form-group col-md-4">
-                            <label for="Name">listener Name:</label>
-                            <input type="text" class="form-control" name="listener_name">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4"></div>
-                        <div class="form-group col-md-4">
-                            @foreach($albums as $album )
-                            {{-- {{dd($album)}} --}}
-                            <div class="form-check form-check-inline">
-                                {{ Form::checkbox('album_id[]',$album->id, null,
-                                array('class'=>'form-check-input','id'=>'album')) }}
-                                {!!Form::label('album', $album->album_name. ' by '.$album->artist->artist_name
-                                ,array('class'=>'form-check-label')) !!}
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4"></div>
-                        <div class="form-group col-md-4" style="margin-top:60px">
-                            <button type="submit" class="btn btn-success">Submit</button>
-                        </div>
-                    </div>
-                    {!! Form::close() !!}
-            </div>
-        </div>
-    </div>
-    @push('scripts')
-    {{$dataTable->scripts()}}
-    @endpush
-    @endsection
+namespace App\DataTables;
+
+use App\Models\Listener;
+use Yajra\DataTables\Html\Button;
+use Yajra\DataTables\Html\Column;
+use Yajra\DataTables\Html\Editor\Editor;
+use Yajra\DataTables\Html\Editor\Fields;
+use Yajra\DataTables\Services\DataTable;
+use Dompdf\Dompdf ;
+
+class ListenersDataTable extends DataTable
+{
+    /**
+     * Build DataTable class.
+     *
+     * @param mixed $query Results from query() method.
+     * @return \Yajra\DataTables\DataTableAbstract
+     */
+    public function dataTable($query)
+    {
+        $listeners = Listener::with('albums:album_name')->select('listeners.*');
+        return datatables()
+            ->eloquent($listeners)
+            ->addColumn('action', function($row) {
+        return "<a href=". route('listener.edit', $row->id). " class=\"btn btn-warning\">Edit</a> 
+                    <form action=". route('listener.destroy', $row->id). " method= \"POST\" >". csrf_field() .
+                    '<input name="_method" type="hidden" value="DELETE">
+                    <button class="btn btn-danger" type="submit">Delete</button>
+                      </form>';
+            })
+                    ->addColumn('albums', function (Listener $listeners) {
+                    return $listeners->albums->map(function($album) {
+                        // return str_limit($listener->listener_name, 30, '...');
+                        return "<li>".$album->album_name. "</li>";
+                    })->implode('<br>');
+                })
+                  //   ->addColumn('checkbox', function ($row) {
+                  //   return '<input type="checkbox" id="'.$row->id.'" name="listener_id" />';
+                  // })
+                  // ->rawColumns(['listener','action'])
+            ->escapeColumns([]);
+    }
+
+    /**
+     * Get query source of dataTable.
+     *
+     * @param \App\Models\Listener $model
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function query(Listener $model)
+    {
+        return $model->newQuery();
+    }
+
+    /**
+     * Optional method if you want to use html builder.
+     *
+     * @return \Yajra\DataTables\Html\Builder
+     */
+    public function html()
+    {
+        return $this->builder()
+                    ->setTableId('listeners-table')
+                    ->columns($this->getColumns())
+                    ->minifiedAjax()
+                    ->dom('Bfrtip')
+                    ->orderBy(1)
+                    ->buttons(
+                        Button::make('create'),
+                        // Button::make('export'),
+                        // Button::make('print'),
+                        Button::make('reset'),
+                        Button::make('reload')
+                    )
+                    ->parameters([
+                        'buttons' => ['excel','pdf','csv'],
+                    ]);
+    }
+
+    /**
+     * Get columns.
+     *
+     * @return array
+     */
+   protected function getColumns()
+    {
+        return [
+            
+            Column::make('id'),
+            Column::make('listener_name')->title('listener'),
+            Column::make('albums')->name('albums.album_name')->title('albums'),
+            Column::make('created_at'),
+            Column::make('updated_at'),
+            Column::computed('action')
+                  ->exportable(false)
+                  ->printable(false)
+                  ->width(60)
+                  ->addClass('text-center'),
+        ];
+    }
+
+    /**
+     * Get filename for export.
+     *
+     * @return string
+     */
+    protected function filename()
+    {
+        return 'Listeners_' . date('YmdHis');
+    }
+}
